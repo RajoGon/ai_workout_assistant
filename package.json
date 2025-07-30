@@ -1,0 +1,33 @@
+{
+  "name": "ai_assistant",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' server.ts",
+    "lint": "eslint 'src/**/*.ts'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.1.0",
+    "dotenv": "^17.2.1",
+    "eslint": "^9.32.0",
+    "express": "^5.1.0",
+    "install": "^0.13.0",
+    "nodemon": "^3.1.10",
+    "npm": "^11.5.1",
+    "prisma": "^6.13.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.13.0",
+    "ollama": "^0.5.16",
+    "openai": "^5.10.2"
+  }
+}

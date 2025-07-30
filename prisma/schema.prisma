@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id               Int                @id @default(autoincrement())
+  email            String             @unique
+  name             String?
+  workouts         Workout[]
+  userId           String             @unique @default(uuid())
+  WorkoutEmbedding WorkoutEmbedding[]
+}
+
+model Workout {
+  id                 Int               @id @default(autoincrement())
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  type               String            @db.VarChar(255)
+  distance           Int?
+  duration           Int?
+  time               String
+  completed          Boolean           @default(false)
+  embeddingGenerated Boolean           @default(false)
+  user               User              @relation(fields: [userId], references: [userId])
+  userId             String
+  workoutId          String            @unique @default(uuid())
+  WorkoutEmbedding   WorkoutEmbedding?
+}
+
+model WorkoutEmbedding {
+  id        String                     @id @default(uuid())
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
+  content   String                     @db.Text
+  embedding Unsupported("vector(768)")
+  metadata  Json?
+  workout   Workout                    @relation(fields: [workoutId], references: [workoutId])
+  workoutId String                     @unique
+  user      User                       @relation(fields: [userId], references: [userId])
+  userId    String
+}
