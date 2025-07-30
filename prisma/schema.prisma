@@ -22,6 +22,7 @@ model User {
   workouts         Workout[]
   userId           String             @unique @default(uuid())
   WorkoutEmbedding WorkoutEmbedding[]
+  ChatHistory      ChatHistory[]
 }
 
 model Workout {
@@ -51,4 +52,16 @@ model WorkoutEmbedding {
   workoutId String                     @unique
   user      User                       @relation(fields: [userId], references: [userId])
   userId    String
+}
+
+model ChatHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  chatId    String
+  message   Json // Stores {role: 'user' | 'assistant', content: string}
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [userId])
+
+  @@index([userId, chatId])
+  @@index([chatId, createdAt])
 }
