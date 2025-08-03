@@ -1,6 +1,6 @@
 
 import { Router } from "express";
-import { agenticChat, chat } from "../cnotroller/chat";
+import { agenticChat, chat } from "../cnotroller/workoutchat";
 
 const router = Router();
 router.post('/', chat)

@@ -23,6 +23,7 @@ model User {
   userId           String             @unique @default(uuid())
   WorkoutEmbedding WorkoutEmbedding[]
   ChatHistory      ChatHistory[]
+  ChatIntent       ChatIntent[]
 }
 
 model Workout {
@@ -39,6 +40,7 @@ model Workout {
   userId             String
   workoutId          String            @unique @default(uuid())
   WorkoutEmbedding   WorkoutEmbedding?
+  ChatIntent         ChatIntent[]
 }
 
 model WorkoutEmbedding {
@@ -64,4 +66,25 @@ model ChatHistory {
 
   @@index([userId, chatId])
   @@index([chatId, createdAt])
+}
+
+model ChatIntent {
+  id             String   @id @default(uuid())
+  chatId         String
+  workoutId      String? // Populated once CRUD finishes
+  userId         String
+  intentId       String   @unique @default(uuid())
+  intentType     String // create/update/retrieve/delete
+  fulfilled      Boolean  @default(false)
+  metadata       Json? // User provided fields {type: 'running', distance: 5}
+  missingFields  String[] // Array of required missing fields
+  optionalFields String[] // Array of optional fields to ask for
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [userId])
+  workout        Workout? @relation(fields: [workoutId], references: [workoutId])
+
+  @@index([chatId])
+  @@index([userId, intentType])
+  @@index([fulfilled])
 }

@@ -13,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.1.0",
     "dotenv": "^17.2.1",
@@ -27,6 +28,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",
+    "cors": "^2.8.5",
     "ollama": "^0.5.16",
     "openai": "^5.10.2"
   }

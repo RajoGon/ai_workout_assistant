@@ -61,7 +61,7 @@ export const llmModel = (() => {
             ...options,
           });
 
-          console.log('Response ollama', response)
+          console.log('Response ollama', typeof response)
           return response.response;
         },
         async chat(messages: any[], options?: any) {
