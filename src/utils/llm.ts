@@ -232,6 +232,33 @@ export async function searchWithText(
   });
 }
 
+export function parseLlmResponseAsJson(response: any) {
+  try {
+    const simplyParsed = JSON.parse(response.toString());
+    console.log('Simple parse', simplyParsed);
+    return simplyParsed;
+  } catch (e1) {
+    console.log('Simple parse failed, trying regex');
+
+    try {
+      const regex = /```json\s*([\s\S]*?)\s*```/g;
+      const regexParsed = regex.exec(response);
+
+      console.log('Regex parser result', regexParsed);
+
+      if (regexParsed && regexParsed[1]) {
+        return JSON.parse(regexParsed[1]); // Use the capture group, not full match
+      } else {
+        console.log('Regex did not match or extract JSON');
+        throw new Error('Cannot parse via regex');
+      }
+    } catch (e2) {
+      throw new Error('Cannot parse this Json');
+
+    }
+  }
+}
+
 // Export configuration for reference
 export { config as llmConfig };
 
