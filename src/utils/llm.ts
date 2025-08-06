@@ -1,31 +1,35 @@
 import { Ollama } from "ollama";
 import OpenAI from "openai";
 import { prisma } from "../..";
+import { GoogleGenAI } from "@google/genai";
 
 const provider = process.env.LLM_PROVIDER || 'ollama';
 const USE_OLLAMA = process.env.USE_OLLAMA === 'true' || process.env.USE_OLLAMA === undefined;
 // Environment configuration interface
 interface LLMConfig {
-  MODEL_PROVIDER: 'ollama' | 'openai';
+  MODEL_PROVIDER: 'ollama' | 'openai' | 'gemini';
   MODEL_NAME: string;
   EMBEDDING_PROVIDER: 'ollama' | 'openai';
   EMBEDDING_MODEL: string;
   OPENAI_API_KEY?: string;
   OLLAMA_BASE_URL?: string;
+  GEMINI_API_KEY?: string;
 }
 // Load environment configuration
 const config: LLMConfig = {
-  MODEL_PROVIDER: (process.env.USE_OLLAMA as 'ollama' | 'openai') || 'ollama',
+  MODEL_PROVIDER: (process.env.USE_OLLAMA as 'ollama' | 'openai' | 'gemini') || 'gemini',
   MODEL_NAME: process.env.MODEL_NAME || 'qwen2.5:7b-instruct',
   EMBEDDING_PROVIDER: (process.env.EMBEDDING_PROVIDER as 'ollama' | 'openai') || 'ollama',
   EMBEDDING_MODEL: process.env.EMBEDDING_MODEL || 'nomic-embed-text',
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+  GEMINI_API_KEY : process.env.GEMINI_API_KEY || ''
 };
 
 // Initialize LLM instances
 let ollamaInstance: Ollama | null = null;
 let openaiInstance: OpenAI | null = null;
+let geminiInstance : GoogleGenAI | null = null;
 
 if (config.MODEL_PROVIDER === 'ollama' || config.EMBEDDING_PROVIDER === 'ollama') {
   ollamaInstance = new Ollama({
@@ -41,8 +45,15 @@ if (config.MODEL_PROVIDER === 'openai' || config.EMBEDDING_PROVIDER === 'openai'
     apiKey: config.OPENAI_API_KEY,
   });
 }
+
+if (config.MODEL_PROVIDER === 'gemini') {
+  const geminiConfig = {apiKey: "AIzaSyAhZCVHAH1zYr5Y2jSHJnLwVQAdbTURtKU"}
+  console.log('Gemini api', geminiConfig)
+  geminiInstance = new GoogleGenAI(geminiConfig);
+}
 // LLM Model instance
 export const llmModel = (() => {
+  console.log('Using ', config.MODEL_PROVIDER)
   switch (config.MODEL_PROVIDER) {
     case 'ollama':
       if (!ollamaInstance) {
@@ -102,7 +113,49 @@ export const llmModel = (() => {
           return response.choices[0]?.message.content || '';
         },
       };
+    case 'gemini':
+      if (!geminiInstance) {
+        throw new Error('Gemini instance not initialized');
+      }
+      return {
+        provider: 'gemini' as const,
+        instance: geminiInstance,
+        modelName: config.MODEL_NAME,
 
+        async generate(prompt: string, options?: any) {
+          console.log('Prompting gemini', "gemini-2.5-flash", prompt)
+          const response = await geminiInstance.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+              thinkingConfig: {
+                thinkingBudget: 0, // Disables thinking
+              },
+            }
+          });
+          return response.text || null;
+        },
+        async chat(messages: any[], options?: any) {
+          messages = messages.map((messaage)=>{
+            return { 
+              role: (messaage.role === 'user')? 'user': 'model',
+              parts: [{text:messaage.content}]
+            }
+          })
+          console.log('Prompting gemini', "gemini-2.5-flash")
+
+          const response = await geminiInstance.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: messages,
+            config: {
+              thinkingConfig: {
+                thinkingBudget: 0, // Disables thinking
+              },
+            }
+          });
+          return response.text || null;
+        },
+      };
     default:
       throw new Error(`Unsupported model provider: ${config.MODEL_PROVIDER}`);
   }

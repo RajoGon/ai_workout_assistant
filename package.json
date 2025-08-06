@@ -27,6 +27,7 @@
     "typescript": "^5.8.3"
   },
   "dependencies": {
+    "@google/genai": "^1.12.0",
     "@prisma/client": "^6.13.0",
     "cors": "^2.8.5",
     "ollama": "^0.5.16",
