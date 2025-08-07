@@ -32,8 +32,10 @@ model Workout {
   updatedAt          DateTime          @updatedAt
   type               String            @db.VarChar(255)
   distance           Int?
-  duration           Int?
-  time               String
+  idealDuration      Int?              // User-planned duration in minutes
+  actualDuration     Int?              // Calculated duration from startDate/endDate
+  startDate          DateTime          // Required - when workout starts/started
+  endDate            DateTime?         // Optional - when workout ends/ended
   completed          Boolean           @default(false)
   embeddingGenerated Boolean           @default(false)
   user               User              @relation(fields: [userId], references: [userId])
@@ -60,7 +62,9 @@ model ChatHistory {
   id        String   @id @default(uuid())
   userId    String
   chatId    String
-  message   Json // Stores {role: 'user' | 'assistant', content: string}
+  type      String?
+  accepted  String?
+  message   Json     // Stores {role: 'user' | 'assistant', content: string}
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [userId])
 
@@ -74,9 +78,9 @@ model ChatIntent {
   workoutId      String? // Populated once CRUD finishes
   userId         String
   intentId       String   @unique @default(uuid())
-  intentType     String // create/update/retrieve/delete
+  intentType     String   // create/update/retrieve/delete
   fulfilled      Boolean  @default(false)
-  metadata       Json? // User provided fields {type: 'running', distance: 5}
+  metadata       Json?    // User provided fields {type: 'running', distance: 5, startDate: '2024-01-01T18:00:00Z'}
   missingFields  String[] // Array of required missing fields
   optionalFields String[] // Array of optional fields to ask for
   createdAt      DateTime @default(now())

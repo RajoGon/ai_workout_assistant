@@ -1,23 +1,26 @@
-// Define workout field requirements for create
+
+// Updated interfaces to match your database schema
 export const CREATE_WORKOUT_FIELDS = {
-  required: ['type', 'time'],
-  optional: ['distance', 'duration'],
+  required: ['type', 'startDate'], // Match your DB: startDate is required
+  optional: ['distance', 'idealDuration', 'endDate'],
   types: {
     type: 'string',
-    distance: 'number',
-    duration: 'number',
-    time: 'string'
+    distance: 'number', 
+    idealDuration: 'number',
+    startDate: 'string', // Will be parsed to DateTime
+    endDate: 'string'    // Will be parsed to DateTime
   }
 };
-// Define workout field requirements for update
+
 export const UPDATE_WORKOUT_FIELDS = {
   required: ['workoutIdentifier'],
-  optional: ['type', 'time','distance', 'duration'],
+  optional: ['type', 'startDate', 'endDate', 'distance', 'idealDuration'],
   types: {
     type: 'string',
     distance: 'number',
-    duration: 'number',
-    time: 'string',
+    idealDuration: 'number', 
+    startDate: 'string',
+    endDate: 'string',
     workoutIdentifier: 'string'
   }
 };
@@ -27,3 +30,10 @@ export interface IntentDetectionResult {
   confidence: number;
   extractedFields: Record<string, any>;
 }
+
+export const WORKOUT_TYPES = ["Running", "Cycling", "Swimming", "Yoga", "Walking"];
+export const RAG_KEYWORDS = [
+  'suggest', 'recommend', 'advice', 'based on', 'history', 'past', 'previous',
+  'what do you think', 'should i', 'help me choose', 'best time', 'good distance',
+  'when should', 'how long', 'analyze', 'look at my', 'considering my'
+];

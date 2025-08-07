@@ -29,6 +29,8 @@
   "dependencies": {
     "@google/genai": "^1.12.0",
     "@prisma/client": "^6.13.0",
+    "chrono": "^1.0.5",
+    "chrono-node": "^2.8.4",
     "cors": "^2.8.5",
     "ollama": "^0.5.16",
     "openai": "^5.10.2"

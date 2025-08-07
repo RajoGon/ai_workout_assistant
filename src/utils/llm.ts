@@ -236,7 +236,7 @@ export async function vectorSearch<T = any>({
   threshold,
   additionalColumns = [],
   userId = ''
-}: VectorSearchOptions): Promise<T[]> {
+}: VectorSearchOptions): Promise<T[]| null> {
   //  const embeddingString = `[${queryEmbedding.join(', ')}]`;
   if (Array.isArray(queryEmbedding)) {
     queryEmbedding = `[${queryEmbedding.join(', ')}]` as any;
@@ -264,6 +264,9 @@ export async function vectorSearch<T = any>({
   `;
 
   const results = await prisma.$queryRawUnsafe<T[]>(query);
+  if(!results){
+    return null;
+  }
   const resultStringified = results.map((result: any) => {
     return `${result.content}`
   })

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getAllWorkouts, addWorkout, generateEmbeddings } from "../cnotroller/workout";
+import { getAllWorkouts, addWorkout, generateEmbeddings } from "../controller/workout";
 
 const router = Router();
 router.get('/', getAllWorkouts)
