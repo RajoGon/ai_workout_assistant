@@ -136,13 +136,21 @@ export const llmModel = (() => {
           return response.text || null;
         },
         async chat(messages: any[], options?: any) {
+          const checkRole = (message: { role: string; })=>{
+            let role=''
+          if(messages.length>1){
+            role=(message.role === 'user')? 'user': 'model'
+          }
+          return role;
+          }
+          
           messages = messages.map((messaage)=>{
             return { 
-              role: (messaage.role === 'user')? 'user': 'model',
+              role: checkRole(messaage),
               parts: [{text:messaage.content}]
             }
           })
-          console.log('Prompting gemini', "gemini-2.5-flash")
+          console.log('Prompting gemini', "gemini-2.5-flash", JSON.stringify(messages))
 
           const response = await geminiInstance.models.generateContent({
             model: "gemini-2.5-flash",

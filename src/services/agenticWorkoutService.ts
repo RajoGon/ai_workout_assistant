@@ -76,13 +76,9 @@ export class AgenticWorkoutService {
     const promptLower = prompt.toLowerCase();
 
     // Check for explicit confirmation
-    const hasConfirmation = confirmationKeywords.some(keyword =>
+    let hasConfirmation = confirmationKeywords.some(keyword =>
       promptLower.includes(keyword)
     );
-
-    if (!hasConfirmation) return false;
-    
-    
     // Check if the last assistant message was a suggestion
     const lastMessage= await prisma.chatHistory.findFirst({
       where: {
@@ -95,8 +91,17 @@ export class AgenticWorkoutService {
       },
       orderBy: { createdAt: 'desc' }
     });
-
     if (!lastMessage) return false;
+
+    if (!hasConfirmation){
+      hasConfirmation = await this.llmCheckAffirmation(prompt, (lastMessage.message as any).content);
+      if(!hasConfirmation) return false;
+    }
+    
+    
+
+
+    
 
     // Check if the last message has type 'suggestion'
     return lastMessage.type === 'suggestion';
@@ -104,6 +109,8 @@ export class AgenticWorkoutService {
 
   async llmCheckAffirmation(prompt: string, suggestion: string): Promise<boolean> {
     const systemPrompt = `
+    You are an expert in understanding human emotions and analyze their intention. Here you need to find out 
+    if the user is accepting a certain suggestion or rejecting it. Consider spelling mistakes as well for affirmations.
   User was suggested: "${suggestion}"
   They replied: "${prompt}"
   
@@ -115,7 +122,7 @@ export class AgenticWorkoutService {
       { role: "system", content: systemPrompt }
     ]);
   
-    return result.content?.toLowerCase().includes("yes");
+    return result.toLowerCase().includes("yes");
   }
 
   /**
