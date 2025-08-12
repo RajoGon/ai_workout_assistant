@@ -15,8 +15,8 @@ export async function classifyPrompt(prompt: string, mode: 'llm' | 'rules' = 'ru
 }
 
 function ruleBasedClassification(prompt: string): 'rag' | 'agent' {
-  const actionKeywords = ['create', 'delete', 'update', 'edit', 'add', 'schedule', 'change', 'cancel', 'move'];
-  const workoutKeywords = ['run', 'swim', 'bike', 'workout', 'exercise', 'gym', 'session'];
+  const actionKeywords = ['create', 'delete', 'update', 'edit', 'add', 'schedule', 'change', 'cancel', 'move', 're-schedule', 'reschedule', 'initiate', 'modify'];
+  const workoutKeywords = ['run', 'swim', 'bike', 'workout', 'exercise', 'gym', 'session', 'running', 'yoga', 'Zumba', 'it'];
 
   const promptLower = prompt.toLowerCase();
 

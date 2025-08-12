@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../..";
-import { createWorkoutEmbedding, generateWorkoutEmbedding } from "../utils/workoutEmbeddingSearch";
+import { createWorkoutEmbedding, generateWorkoutEmbedding } from "../utils/workoutEmbeddingUtils";
 
 export const getAllWorkouts = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -12,6 +12,21 @@ export const getAllWorkouts = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 }
+export const getUserWorkouts = async (req: Request, res: Response, next: NextFunction) => {
+  const  userId = req.params.userId as string;
+  console.log('Fetching user workouts for ', userId)
+
+  try {
+    const response = await prisma.workout.findMany({
+      where:{userId}
+    });
+    res.json({ data: response });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 
 export const addWorkout = async (req: Request, res: Response, next: NextFunction) => {
   const { userId, workout } = req.body;
@@ -50,7 +65,7 @@ export const generateEmbeddings = async (req: Request, res: Response, next: Next
     console.log('Number of workouts to embedd', pendingWorkoutsToEmbedd.length)
     // Loop through each to create embedding and update 
     pendingWorkoutsToEmbedd.forEach(async workout => {
-      const content = `Workout on ${workout.time}: ${workout.type}, distance: ${workout.distance} km, duration: ${workout.duration} mins`
+      const content = `Workout on ${workout.startDate}: ${workout.type}, distance: ${workout.distance} km, duration: ${workout.idealDuration} mins`
       const embedding = await generateWorkoutEmbedding(content) as [];
       console.log('Embedding of dimension', embedding.length)
       const embeddingUpdated = await createWorkoutEmbedding(workout.workoutId, workout.userId, content, embedding, {

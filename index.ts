@@ -3,15 +3,21 @@ import errorHandler from "./src/middlewares/errorHandler";
 import workout from "./src/routes/workout";
 import dotenv from 'dotenv';
 import { PrismaClient } from './generated/prisma';
-import chat from './src/routes/chat';
+import chat from './src/routes/workoutchat';
+import cors from 'cors'
+import auth from './src/routes/auth';
+
 
 dotenv.config();
 const app = express();
 app.use(express.json());
-export const prisma = new PrismaClient();
-app.use('/workout', workout)
 
-app.use('/chat', chat)
+app.use(cors());
+export const prisma = new PrismaClient();
+
+app.use('/auth', auth)
+app.use('/workout', workout)
+app.use('/workout-chat', chat)
 
 
 app.use(errorHandler)

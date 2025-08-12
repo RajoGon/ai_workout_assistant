@@ -1,31 +1,35 @@
 import { Ollama } from "ollama";
 import OpenAI from "openai";
 import { prisma } from "../..";
+import { GoogleGenAI } from "@google/genai";
 
 const provider = process.env.LLM_PROVIDER || 'ollama';
 const USE_OLLAMA = process.env.USE_OLLAMA === 'true' || process.env.USE_OLLAMA === undefined;
 // Environment configuration interface
 interface LLMConfig {
-  MODEL_PROVIDER: 'ollama' | 'openai';
+  MODEL_PROVIDER: 'ollama' | 'openai' | 'gemini';
   MODEL_NAME: string;
   EMBEDDING_PROVIDER: 'ollama' | 'openai';
   EMBEDDING_MODEL: string;
   OPENAI_API_KEY?: string;
   OLLAMA_BASE_URL?: string;
+  GEMINI_API_KEY?: string;
 }
 // Load environment configuration
 const config: LLMConfig = {
-  MODEL_PROVIDER: (process.env.USE_OLLAMA as 'ollama' | 'openai') || 'ollama',
+  MODEL_PROVIDER: (process.env.USE_OLLAMA as 'ollama' | 'openai' | 'gemini') || 'gemini',
   MODEL_NAME: process.env.MODEL_NAME || 'qwen2.5:7b-instruct',
   EMBEDDING_PROVIDER: (process.env.EMBEDDING_PROVIDER as 'ollama' | 'openai') || 'ollama',
   EMBEDDING_MODEL: process.env.EMBEDDING_MODEL || 'nomic-embed-text',
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || ''
 };
 
 // Initialize LLM instances
 let ollamaInstance: Ollama | null = null;
 let openaiInstance: OpenAI | null = null;
+let geminiInstance: GoogleGenAI | null = null;
 
 if (config.MODEL_PROVIDER === 'ollama' || config.EMBEDDING_PROVIDER === 'ollama') {
   ollamaInstance = new Ollama({
@@ -41,8 +45,15 @@ if (config.MODEL_PROVIDER === 'openai' || config.EMBEDDING_PROVIDER === 'openai'
     apiKey: config.OPENAI_API_KEY,
   });
 }
+
+if (config.MODEL_PROVIDER === 'gemini') {
+  const geminiConfig = { apiKey: "AIzaSyAhZCVHAH1zYr5Y2jSHJnLwVQAdbTURtKU" }
+  console.log('Gemini api', geminiConfig)
+  geminiInstance = new GoogleGenAI(geminiConfig);
+}
 // LLM Model instance
 export const llmModel = (() => {
+  console.log('Using ', config.MODEL_PROVIDER)
   switch (config.MODEL_PROVIDER) {
     case 'ollama':
       if (!ollamaInstance) {
@@ -61,7 +72,7 @@ export const llmModel = (() => {
             ...options,
           });
 
-          console.log('Response ollama', response)
+          console.log('Response ollama', typeof response)
           return response.response;
         },
         async chat(messages: any[], options?: any) {
@@ -102,7 +113,57 @@ export const llmModel = (() => {
           return response.choices[0]?.message.content || '';
         },
       };
+    case 'gemini':
+      if (!geminiInstance) {
+        throw new Error('Gemini instance not initialized');
+      }
+      return {
+        provider: 'gemini' as const,
+        instance: geminiInstance,
+        modelName: config.MODEL_NAME,
 
+        async generate(prompt: string, options?: any) {
+          console.log('Prompting gemini', "gemini-2.5-flash", prompt)
+          const response = await geminiInstance.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+              thinkingConfig: {
+                thinkingBudget: 0, // Disables thinking
+              },
+            }
+          });
+          return response.text || null;
+        },
+        async chat(messages: any[], options?: any) {
+          const checkRole = (message: { role: string; }) => {
+            let role = ''
+            if (messages.length > 1) {
+              role = (message.role === 'user') ? 'user' : 'model'
+            }
+            return role;
+          }
+
+          messages = messages.map((messaage) => {
+            return {
+              role: checkRole(messaage),
+              parts: [{ text: messaage.content }]
+            }
+          })
+          console.log('Prompting gemini', "gemini-2.5-flash", JSON.stringify(messages))
+
+          const response = await geminiInstance.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: messages,
+            config: {
+              thinkingConfig: {
+                thinkingBudget: 0, // Disables thinking
+              },
+            }
+          });
+          return response.text || null;
+        },
+      };
     default:
       throw new Error(`Unsupported model provider: ${config.MODEL_PROVIDER}`);
   }
@@ -183,7 +244,7 @@ export async function vectorSearch<T = any>({
   threshold,
   additionalColumns = [],
   userId = ''
-}: VectorSearchOptions): Promise<T[]> {
+}: VectorSearchOptions): Promise<T[] | null> {
   //  const embeddingString = `[${queryEmbedding.join(', ')}]`;
   if (Array.isArray(queryEmbedding)) {
     queryEmbedding = `[${queryEmbedding.join(', ')}]` as any;
@@ -198,6 +259,7 @@ export async function vectorSearch<T = any>({
   if (threshold !== undefined) {
     whereClause = `WHERE ${embeddingColumn} <=> '${queryEmbedding}' < ${threshold}`;
   }
+  console.log('Filtering embeddings for user', userId);
   if (userId) {
     whereClause += ` AND "userId" = '${userId}'`;
   }
@@ -211,6 +273,9 @@ export async function vectorSearch<T = any>({
   `;
 
   const results = await prisma.$queryRawUnsafe<T[]>(query);
+  if (!results) {
+    return null;
+  }
   const resultStringified = results.map((result: any) => {
     return `${result.content}`
   })
@@ -230,6 +295,33 @@ export async function searchWithText(
     ...options,
     queryEmbedding,
   });
+}
+
+export function parseLlmResponseAsJson(response: any) {
+  try {
+    const simplyParsed = JSON.parse(response.toString());
+    console.log('Simple parse', simplyParsed);
+    return simplyParsed;
+  } catch (e1) {
+    console.log('Simple parse failed, trying regex');
+
+    try {
+      const regex = /```json\s*([\s\S]*?)\s*```/g;
+      const regexParsed = regex.exec(response);
+
+      console.log('Regex parser result', regexParsed);
+
+      if (regexParsed && regexParsed[1]) {
+        return JSON.parse(regexParsed[1]); // Use the capture group, not full match
+      } else {
+        console.log('Regex did not match or extract JSON');
+        throw new Error('Cannot parse via regex');
+      }
+    } catch (e2) {
+      throw new Error('Cannot parse this Json');
+
+    }
+  }
 }
 
 // Export configuration for reference

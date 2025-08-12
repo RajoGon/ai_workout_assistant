@@ -2,7 +2,9 @@
 import { Request, Response, NextFunction } from "express";
 import { RagChat } from "../services/ragChatService";
 import { classifyPrompt } from "../utils/intentClassifier";
+import { AgenticWorkoutService } from "../services/agenticWorkoutService";
 const ragChatService = new RagChat();
+const agenticChatService = new AgenticWorkoutService();
 
 export const chat = async (req: Request, res: Response, next: NextFunction) => {
   const { userId, prompt } = req.body;
@@ -26,18 +28,26 @@ export const agenticChat = async (req: Request, res: Response, next: NextFunctio
 
   let { chatId } = req.body;
   if (!userId || !prompt) return res.status(400).json({ error: 'Missing userId or prompt' });
+  console.log('Running for user', userId)
   if (!chatId) {
     //generate a new chatId
     chatId = crypto.randomUUID();
   }
+  let response;
   try {
-    //Clarify intent
-    let intent = await classifyPrompt(prompt, "rules");
-    let response;
-    if (intent === 'agent') {
-      response = await ragChatService.agenticConversation(userId, chatId, prompt)
+    //check if an intent is on going
+    const existingIntent = await agenticChatService.checkForExistingIntent(userId, chatId, prompt)
+    if (existingIntent) {
+      response = await agenticChatService.agenticChat(userId, chatId, prompt, existingIntent)
     } else {
-      response = await ragChatService.hybridConversation(userId, chatId, prompt)
+      //Clarify intent
+      let intent = await classifyPrompt(prompt, "rules");
+      console.log('Intent = ', intent)
+      if (intent === 'agent') {
+        response = await agenticChatService.agenticChat(userId, chatId, prompt, existingIntent)
+      } else {
+        response = await ragChatService.hybridConversation(userId, chatId, prompt)
+      }
     }
     res.json({ response, chatId });
   } catch (error) {
