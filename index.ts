@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { PrismaClient } from './generated/prisma';
 import chat from './src/routes/workoutchat';
 import cors from 'cors'
+import auth from './src/routes/auth';
 
 
 dotenv.config();
@@ -13,7 +14,9 @@ app.use(express.json());
 
 app.use(cors());
 export const prisma = new PrismaClient();
-app.use('/workout-manager', workout)
+
+app.use('/auth', auth)
+app.use('/workout', workout)
 app.use('/workout-chat', chat)
 
 

@@ -23,13 +23,13 @@ const config: LLMConfig = {
   EMBEDDING_MODEL: process.env.EMBEDDING_MODEL || 'nomic-embed-text',
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-  GEMINI_API_KEY : process.env.GEMINI_API_KEY || ''
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY || ''
 };
 
 // Initialize LLM instances
 let ollamaInstance: Ollama | null = null;
 let openaiInstance: OpenAI | null = null;
-let geminiInstance : GoogleGenAI | null = null;
+let geminiInstance: GoogleGenAI | null = null;
 
 if (config.MODEL_PROVIDER === 'ollama' || config.EMBEDDING_PROVIDER === 'ollama') {
   ollamaInstance = new Ollama({
@@ -47,7 +47,7 @@ if (config.MODEL_PROVIDER === 'openai' || config.EMBEDDING_PROVIDER === 'openai'
 }
 
 if (config.MODEL_PROVIDER === 'gemini') {
-  const geminiConfig = {apiKey: "AIzaSyAhZCVHAH1zYr5Y2jSHJnLwVQAdbTURtKU"}
+  const geminiConfig = { apiKey: "AIzaSyAhZCVHAH1zYr5Y2jSHJnLwVQAdbTURtKU" }
   console.log('Gemini api', geminiConfig)
   geminiInstance = new GoogleGenAI(geminiConfig);
 }
@@ -136,18 +136,18 @@ export const llmModel = (() => {
           return response.text || null;
         },
         async chat(messages: any[], options?: any) {
-          const checkRole = (message: { role: string; })=>{
-            let role=''
-          if(messages.length>1){
-            role=(message.role === 'user')? 'user': 'model'
+          const checkRole = (message: { role: string; }) => {
+            let role = ''
+            if (messages.length > 1) {
+              role = (message.role === 'user') ? 'user' : 'model'
+            }
+            return role;
           }
-          return role;
-          }
-          
-          messages = messages.map((messaage)=>{
-            return { 
+
+          messages = messages.map((messaage) => {
+            return {
               role: checkRole(messaage),
-              parts: [{text:messaage.content}]
+              parts: [{ text: messaage.content }]
             }
           })
           console.log('Prompting gemini', "gemini-2.5-flash", JSON.stringify(messages))
@@ -244,7 +244,7 @@ export async function vectorSearch<T = any>({
   threshold,
   additionalColumns = [],
   userId = ''
-}: VectorSearchOptions): Promise<T[]| null> {
+}: VectorSearchOptions): Promise<T[] | null> {
   //  const embeddingString = `[${queryEmbedding.join(', ')}]`;
   if (Array.isArray(queryEmbedding)) {
     queryEmbedding = `[${queryEmbedding.join(', ')}]` as any;
@@ -259,6 +259,7 @@ export async function vectorSearch<T = any>({
   if (threshold !== undefined) {
     whereClause = `WHERE ${embeddingColumn} <=> '${queryEmbedding}' < ${threshold}`;
   }
+  console.log('Filtering embeddings for user', userId);
   if (userId) {
     whereClause += ` AND "userId" = '${userId}'`;
   }
@@ -272,7 +273,7 @@ export async function vectorSearch<T = any>({
   `;
 
   const results = await prisma.$queryRawUnsafe<T[]>(query);
-  if(!results){
+  if (!results) {
     return null;
   }
   const resultStringified = results.map((result: any) => {

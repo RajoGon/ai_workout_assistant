@@ -12,6 +12,21 @@ export const getAllWorkouts = async (req: Request, res: Response, next: NextFunc
     next(error);
   }
 }
+export const getUserWorkouts = async (req: Request, res: Response, next: NextFunction) => {
+  const  userId = req.params.userId as string;
+  console.log('Fetching user workouts for ', userId)
+
+  try {
+    const response = await prisma.workout.findMany({
+      where:{userId}
+    });
+    res.json({ data: response });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 
 export const addWorkout = async (req: Request, res: Response, next: NextFunction) => {
   const { userId, workout } = req.body;

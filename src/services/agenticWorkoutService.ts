@@ -80,7 +80,7 @@ export class AgenticWorkoutService {
       promptLower.includes(keyword)
     );
     // Check if the last assistant message was a suggestion
-    const lastMessage= await prisma.chatHistory.findFirst({
+    const lastMessage = await prisma.chatHistory.findFirst({
       where: {
         userId,
         chatId,
@@ -93,15 +93,15 @@ export class AgenticWorkoutService {
     });
     if (!lastMessage) return false;
 
-    if (!hasConfirmation){
+    if (!hasConfirmation) {
       hasConfirmation = await this.llmCheckAffirmation(prompt, (lastMessage.message as any).content);
-      if(!hasConfirmation) return false;
+      if (!hasConfirmation) return false;
     }
-    
-    
 
 
-    
+
+
+
 
     // Check if the last message has type 'suggestion'
     return lastMessage.type === 'suggestion';
@@ -117,11 +117,11 @@ export class AgenticWorkoutService {
   Is this an acceptance or affirmation of the suggestion?
   Respond only with: yes or no.
   `;
-  
+
     const result = await llmModel.chat([
       { role: "system", content: systemPrompt }
     ]);
-  
+
     return result.toLowerCase().includes("yes");
   }
 
@@ -522,7 +522,17 @@ export class AgenticWorkoutService {
     // Find the specific workout to update
     const workoutCrudSearchResponse = await this.findWorkoutForCrud(intent, chatId, userId)
     if (!workoutCrudSearchResponse.id) {
-      return workoutCrudSearchResponse;
+      intent.metadata.workoutIdentifier = null;
+      await prisma.chatIntent.update({
+        where: { id: intent.id },
+        data: {
+          metadata: { ...intent.metadata}
+        }
+      });
+      const notFound =  workoutCrudSearchResponse;
+      const workoutList = await this.retrieveWorkouts(intent, chatId, userId)
+      console.log('Returning ', notFound + workoutList )
+      return notFound + workoutList
     }
     let workoutToUpdate = workoutCrudSearchResponse;
 
@@ -699,7 +709,17 @@ For startDate/endDate, preserve the natural language expression exactly as writt
     if (intent.intentType === 'update') {
       const workoutCrudSearchResponse = await this.findWorkoutForCrud(intent, chatId, userId);
       if (!workoutCrudSearchResponse.id) {
-        return workoutCrudSearchResponse;
+        intent.metadata.workoutIdentifier = null;
+        await prisma.chatIntent.update({
+          where: { id: intent.id },
+          data: {
+            metadata: { ...intent.metadata}
+          }
+        });
+        const notFound =  workoutCrudSearchResponse;
+        const workoutList = await this.retrieveWorkouts(intent, chatId, userId)
+        console.log('Returning ', notFound + workoutList )
+        return notFound + workoutList
       }
 
       const workoutData = this.formatWorkoutSummary(workoutCrudSearchResponse);
@@ -813,9 +833,9 @@ You can type "skip" to proceed, provide the details, or ask me for suggestions b
       }
 
       if (!workoutToUpdate) {
-        const response = "I couldn't find that workout. Please try specifying it differently.";
+        const response = "I couldn't find that workout. Please try specifying it differently from the list.";
         await storeAssistantMessage(userId, chatId, response);
-        return { error: response };
+        return response;
       }
 
       return workoutToUpdate;
