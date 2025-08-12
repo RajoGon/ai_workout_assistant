@@ -256,13 +256,6 @@ SUPABASE_URL = https://...
 SUPABASE_KEY = sb_...
 ```
 
-## 📊 Monitoring & Analytics
-
-- Track conversation completion rates
-- Monitor LLM response accuracy  
-- Analyze user workout patterns
-- Performance metrics for database queries
-
 ## 🐛 Troubleshooting
 
 ### Common Issues
@@ -280,10 +273,6 @@ npx prisma generate
 **Date Parsing Issues**
 - Ensure chrono-node is properly configured
 - Check timezone settings
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
 
 ## 🙏 Acknowledgments
 
