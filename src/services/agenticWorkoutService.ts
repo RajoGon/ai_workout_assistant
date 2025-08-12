@@ -223,7 +223,7 @@ export class AgenticWorkoutService {
   async continueIntent(intent: any, prompt: string, chatId: string, userId: string) {
     try {
       // Extract additional fields from user response
-      const newFields = await this.extractFieldsFromResponse(prompt);
+      const newFields = await this.extractFieldsFromResponse(prompt, intent);
 
       // Update intent with new fields
       const updatedMetadata = { ...intent.metadata, ...newFields };
@@ -357,7 +357,8 @@ export class AgenticWorkoutService {
   /**
  * Extract fields from user response
  */
-  async extractFieldsFromResponse(response: string): Promise<Record<string, any>> {
+  async extractFieldsFromResponse(response: string, intent: { metadata: { startDate: any; endDate: any; }; }): Promise<Record<string, any>> {
+    
     if (response.toLowerCase().includes('skip')) {
       return {};
     }
@@ -366,6 +367,13 @@ export class AgenticWorkoutService {
   Extract workout fields from this user response. Return only confident extractions.
   
   VALID WORKOUT TYPES: ${WORKOUT_TYPES.join(', ')}
+  ${intent.metadata.startDate? 'OBTAINED STARTDATE :'+ new Date(intent.metadata.startDate).toLocaleString()+ 
+    '. START DATE is already captured. If user adds any more information to it append it to existing startDate. EXAMPLE - Existing startDate has "8/18/2025, 12:00:00 PM" and user adds "at 9pm". The final startDate should be "18th August at 9pm"' :
+  ''}
+
+  ${intent.metadata.endDate? 'OBTAINED ENDDATE :'+ new Date(intent.metadata.endDate).toLocaleString()+ 
+    '. END DATE is already captured. If user adds any more information to it append it to existing endDate. EXAMPLE - Existing endDate has "8/20/2025, 10:00:00 PM" and user adds "finished at 8am". The final endDate should be "20th August at 8am"' :
+  ''}
   
   FIELD TYPES:
   - type: Workout type (map to valid types above)
@@ -865,6 +873,7 @@ You can type "skip" to proceed, provide the details, or ask me for suggestions b
   }
 
   formatWorkoutDetails(workout: any): string {
+    console.log('Formating final workout', JSON.stringify(workout))
     const startDate = workout.startDate ? new Date(workout.startDate).toLocaleString() : 'Not set';
     const endDate = workout.endDate ? new Date(workout.endDate).toLocaleString() : 'Not set';
 
