@@ -2,7 +2,11 @@
 
 An intelligent fitness companion that combines **Agentic CRUD operations** with **RAG-powered conversations** to help users manage their workout routines through natural language interactions.
 **Chat Samples**
-<img width="633" height="729" alt="image" src="https://github.com/user-attachments/assets/31cedbee-98d8-43c9-94bd-d2807bc4b2ab" /> - Creating a workout
+<img width="633" height="729" alt="image" src="https://github.com/user-attachments/assets/31cedbee-98d8-43c9-94bd-d2807bc4b2ab" /> #Creating a workout
+<img width="599" height="537" alt="image" src="https://github.com/user-attachments/assets/79a33c81-d417-4ce7-b6f7-66b579e5f505" /> #Updating a workout
+<img width="645" height="627" alt="image" src="https://github.com/user-attachments/assets/443a26f7-f17c-4794-9047-f670fc3789d6" /> #Rag chat
+
+
 
 
 ## ✨ Features
