@@ -1,6 +1,9 @@
 # 🏃‍♂️ AI Workout Assistant
 
 An intelligent fitness companion that combines **Agentic CRUD operations** with **RAG-powered conversations** to help users manage their workout routines through natural language interactions.
+**Chat Samples**
+<img width="633" height="729" alt="image" src="https://github.com/user-attachments/assets/31cedbee-98d8-43c9-94bd-d2807bc4b2ab" /> - Creating a workout
+
 
 ## ✨ Features
 
