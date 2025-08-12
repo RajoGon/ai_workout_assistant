@@ -47,7 +47,7 @@ if (config.MODEL_PROVIDER === 'openai' || config.EMBEDDING_PROVIDER === 'openai'
 }
 
 if (config.MODEL_PROVIDER === 'gemini') {
-  const geminiConfig = { apiKey: "AIzaSyAhZCVHAH1zYr5Y2jSHJnLwVQAdbTURtKU" }
+  const geminiConfig = { apiKey: config.GEMINI_API_KEY}
   console.log('Gemini api', geminiConfig)
   geminiInstance = new GoogleGenAI(geminiConfig);
 }
