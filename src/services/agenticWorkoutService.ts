@@ -358,7 +358,7 @@ export class AgenticWorkoutService {
  * Extract fields from user response
  */
   async extractFieldsFromResponse(response: string, intent: { metadata: { startDate: any; endDate: any; }; }): Promise<Record<string, any>> {
-    
+
     if (response.toLowerCase().includes('skip')) {
       return {};
     }
@@ -367,13 +367,13 @@ export class AgenticWorkoutService {
   Extract workout fields from this user response. Return only confident extractions.
   
   VALID WORKOUT TYPES: ${WORKOUT_TYPES.join(', ')}
-  ${intent.metadata.startDate? 'OBTAINED STARTDATE :'+ new Date(intent.metadata.startDate).toLocaleString()+ 
-    '. START DATE is already captured. If user adds any more information to it append it to existing startDate. EXAMPLE - Existing startDate has "8/18/2025, 12:00:00 PM" and user adds "at 9pm". The final startDate should be "18th August at 9pm"' :
-  ''}
+  ${intent.metadata.startDate ? 'OBTAINED STARTDATE :' + new Date(intent.metadata.startDate).toLocaleString() +
+        '. START DATE is already captured. If user adds any more information to it append it to existing startDate. EXAMPLE - Existing startDate has "8/18/2025, 12:00:00 PM" and user adds "at 9pm". The final startDate should be "18th August at 9pm"' :
+        ''}
 
-  ${intent.metadata.endDate? 'OBTAINED ENDDATE :'+ new Date(intent.metadata.endDate).toLocaleString()+ 
-    '. END DATE is already captured. If user adds any more information to it append it to existing endDate. EXAMPLE - Existing endDate has "8/20/2025, 10:00:00 PM" and user adds "finished at 8am". The final endDate should be "20th August at 8am"' :
-  ''}
+  ${intent.metadata.endDate ? 'OBTAINED ENDDATE :' + new Date(intent.metadata.endDate).toLocaleString() +
+        '. END DATE is already captured. If user adds any more information to it append it to existing endDate. EXAMPLE - Existing endDate has "8/20/2025, 10:00:00 PM" and user adds "finished at 8am". The final endDate should be "20th August at 8am"' :
+        ''}
   
   FIELD TYPES:
   - type: Workout type (map to valid types above)
@@ -529,17 +529,18 @@ export class AgenticWorkoutService {
 
     // Find the specific workout to update
     const workoutCrudSearchResponse = await this.findWorkoutForCrud(intent, chatId, userId)
+    //Check if workout is found, else retrieve workouts as ask user to choose again.
     if (!workoutCrudSearchResponse.id) {
       intent.metadata.workoutIdentifier = null;
       await prisma.chatIntent.update({
         where: { id: intent.id },
         data: {
-          metadata: { ...intent.metadata}
+          metadata: { ...intent.metadata }
         }
       });
-      const notFound =  workoutCrudSearchResponse;
+      const notFound = workoutCrudSearchResponse;
       const workoutList = await this.retrieveWorkouts(intent, chatId, userId)
-      console.log('Returning ', notFound + workoutList )
+      console.log('Returning ', notFound + workoutList)
       return notFound + workoutList
     }
     let workoutToUpdate = workoutCrudSearchResponse;
@@ -721,12 +722,12 @@ For startDate/endDate, preserve the natural language expression exactly as writt
         await prisma.chatIntent.update({
           where: { id: intent.id },
           data: {
-            metadata: { ...intent.metadata}
+            metadata: { ...intent.metadata }
           }
         });
-        const notFound =  workoutCrudSearchResponse;
+        const notFound = workoutCrudSearchResponse;
         const workoutList = await this.retrieveWorkouts(intent, chatId, userId)
-        console.log('Returning ', notFound + workoutList )
+        console.log('Returning ', notFound + workoutList)
         return notFound + workoutList
       }
 
