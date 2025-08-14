@@ -15,6 +15,7 @@ const supabase = createClient(
 
 export default async function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
+    //Bypass validation for this test user
     if (req.body.userId === "user123") {
       next();
       return;

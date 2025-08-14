@@ -1,11 +1,9 @@
-
-// Updated interfaces to match your database schema
 export const CREATE_WORKOUT_FIELDS = {
-  required: ['type', 'startDate'], // Match your DB: startDate is required
+  required: ['type', 'startDate'],
   optional: ['distance', 'idealDuration', 'endDate'],
   types: {
     type: 'string',
-    distance: 'number', 
+    distance: 'number',
     idealDuration: 'number',
     startDate: 'string', // Will be parsed to DateTime
     endDate: 'string'    // Will be parsed to DateTime
@@ -18,7 +16,7 @@ export const UPDATE_WORKOUT_FIELDS = {
   types: {
     type: 'string',
     distance: 'number',
-    idealDuration: 'number', 
+    idealDuration: 'number',
     startDate: 'string',
     endDate: 'string',
     workoutIdentifier: 'string'
