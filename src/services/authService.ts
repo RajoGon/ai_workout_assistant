@@ -1,7 +1,7 @@
 
 // services/AuthService.js
 import { createClient } from '@supabase/supabase-js';
-import { prisma } from '../..';
+import { prisma } from '../lib/prisma';
 
 export default class AuthService {
   supabase: any;

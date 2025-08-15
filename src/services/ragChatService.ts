@@ -1,7 +1,7 @@
-import { prisma } from "../..";
-import { storeAssistantMessage, storeSystemMessage, storeUserMessage } from "../utils/chatUtils";
+import { prisma } from "../lib/prisma";
+import { ChatUtils } from "../utils/chatUtils";
 import { llmModel } from "../utils/llm";
-import { searchWorkoutEmbeddings } from "../utils/workoutEmbeddingUtils";
+import { WorkoutEmbeddingUtils } from "../utils/workoutEmbeddingUtils";
 
 export class RagChat {
   chatMemory = new Map();
@@ -12,7 +12,7 @@ export class RagChat {
     console.log('Rag chat initialized');
   }
   async hybridChat(userId: string, prompt: string) {
-    const result = await searchWorkoutEmbeddings(userId, prompt);
+    const result = await WorkoutEmbeddingUtils.searchEmbeddings(userId, prompt);
     let contextDocs;
     if(!result){
       console.log('No similarity matches found', result)
@@ -39,7 +39,7 @@ Assistant:
   }
 
   async hybridConversation(userId: string, chatId: string, prompt: string, intent?: any) {
-    const result = await searchWorkoutEmbeddings(userId, prompt);
+    const result = await WorkoutEmbeddingUtils.searchEmbeddings(userId, prompt);
     let contextDocs;
     if(result && result.length === 0){
       console.log('No similarity matches found', result)
@@ -107,12 +107,12 @@ Assistant:
       ...(intent && {type:'suggestion'})
     }
     // Store system message in database
-    // await storeSystemMessage(userId, chatId, systemMessage.content);
+    // await ChatUtils.storeSystemMessage(userId, chatId, systemMessage.content);
 
     // Store user message in database
-    await storeUserMessage(userId, chatId, userMessage.content);
+    await ChatUtils.storeUserMessage(userId, chatId, userMessage.content);
 
-    await storeAssistantMessage(userId, chatId, llmMessage.content, llmMessage.type);
+    await ChatUtils.storeAssistantMessage(userId, chatId, llmMessage.content, llmMessage.type);
 
     messages.push(llmMessage);
 

@@ -1,3 +1,30 @@
+export interface WorkoutIntent {
+  id?: string;
+  chatId: string;
+  userId: string;
+  intentType: string;
+  metadata: Record<string, any>;
+  missingFields: string[];
+  optionalFields: string[];
+  fulfilled?: boolean;
+  workoutId?: string;
+  intentContext?: string;
+}
+
+export interface Workout {
+  type: string;
+  distance?: number | null;
+  idealDuration?: number | null;
+  actualDuration?: number | null;
+  startDate: Date;
+  endDate?: Date | null;
+  completed: boolean;
+}
+
+export interface WorkoutMetadata {
+  [key: string]: any;
+}
+
 export const CREATE_WORKOUT_FIELDS = {
   required: ['type', 'startDate'],
   optional: ['distance', 'idealDuration', 'endDate'],
