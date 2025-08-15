@@ -1,6 +1,6 @@
 # 🏃‍♂️ AI Workout Assistant
 
-An intelligent fitness companion that combines **Agentic CRUD operations** with **RAG-powered conversations** to help users manage their workout routines through natural language interactions.
+An intelligent fitness companion that combines **Agentic CRUD operations** with **RAG-powered conversations** to help users manage their workout routines through natural language interactions. 
 
 
 
@@ -59,8 +59,20 @@ npm install
 ### 3. Environment Setup
 Create a `.env` file:
 ```env
+# Connect to Supabase via connection pooling
 DATABASE_URL="postgresql://username:password@localhost:5432/workout_db"
+# Direct connection to the database. Used for migrations
+DIRECT_URL="postgresql://username.password:workout_db@[aws-region].pooler.supabase.com:5432/postgres"
 OPENAI_API_KEY="your_openai_api_key_here"
+USE_OLLAMA= ollama|openai|gemini
+EMBEDDING_PROVIDER=ollama # or openai
+OLLAMA_BASE_URL=http://localhost:11434
+MODEL_NAME="qwen2.5:7b-instruct"
+EMBEDDING_MODEL="nomic-embed-text:v1.5"
+GEMINI_API_KEY = "your_gemini_api_key_here"
+SUPABASE_URL = https://...
+SUPABASE_KEY = sb_...
+X_API_KEY_1 = "userId_to_bypass_authentication"
 ```
 
 ### 4. Database Setup
@@ -130,7 +142,7 @@ AI: "I'll update your yoga session to Saturday morning. What time works best for
 
 ### Core Components
 
-#### `AgenticWorkoutService`
+#### `WorkoutOrchestrator`
 The main service orchestrating all workout operations:
 - Intent detection and management
 - Multi-turn conversation handling
@@ -181,8 +193,9 @@ private readonly WORKOUT_TYPES = ["Running", "Cycling", "Swimming", "Yoga", "Wal
 Customize keywords that trigger recommendation mode:
 ```typescript
 private readonly RAG_KEYWORDS = [
-  'suggest', 'recommend', 'advice', 'based on', 'history',
-  'what do you think', 'should i', 'help me choose'
+  'suggest', 'recommend', 'advice', 'based on', 'history', 'past', 'previous',
+  'what do you think', 'should i', 'help me choose', 'best time', 'good distance',
+  'when should', 'how long', 'analyze', 'look at my', 'considering my'
 ];
 ```
 
@@ -233,7 +246,7 @@ The RAG system analyzes:
 
 ### Core Methods
 
-#### `agenticChat(userId, chatId, prompt, existingIntent)`
+#### `processWorkoutRequest(userId, chatId, prompt, existingIntent)`
 Main entry point for processing user messages
 
 #### `detectIntentAndFields(prompt)`
@@ -274,10 +287,14 @@ npx prisma generate
 - Ensure chrono-node is properly configured
 - Check timezone settings
 
+## PocketFlow Tutorial
+- https://code2tutorial.com/tutorial/b88bef9b-2658-48dd-9455-221ea57442fd/index.md
+
 ## 🙏 Acknowledgments
 
 - [Prisma](https://prisma.io) for excellent database tooling
 - [Chrono](https://github.com/wanasit/chrono) for natural language date parsing
+- [PocketFlow-Tutorial](https://github.com/The-Pocket/PocketFlow-Tutorial-Codebase-Knowledge) for generating the tutorial
 - The open source community for inspiration and contributions
 
 ## 📞 Support
