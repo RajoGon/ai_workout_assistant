@@ -3,7 +3,6 @@ import { getAllWorkouts, addWorkout, generateEmbeddings, getUserWorkouts } from 
 
 const router = Router();
 router.get('/', getAllWorkouts)
-
 router.post('/', addWorkout)
 router.get('/generate-embeddings', generateEmbeddings)
 router.get('/:userId', getUserWorkouts)

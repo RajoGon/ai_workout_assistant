@@ -1,7 +1,10 @@
 import { Ollama } from "ollama";
 import OpenAI from "openai";
-import { prisma } from "../..";
 import { GoogleGenAI } from "@google/genai";
+import { prisma } from "../lib/prisma";
+import config from "../config/config";
+
+
 
 const provider = process.env.LLM_PROVIDER || 'ollama';
 const USE_OLLAMA = process.env.USE_OLLAMA === 'true' || process.env.USE_OLLAMA === undefined;
@@ -16,14 +19,14 @@ interface LLMConfig {
   GEMINI_API_KEY?: string;
 }
 // Load environment configuration
-const config: LLMConfig = {
-  MODEL_PROVIDER: (process.env.USE_OLLAMA as 'ollama' | 'openai' | 'gemini') || 'gemini',
-  MODEL_NAME: process.env.MODEL_NAME || 'qwen2.5:7b-instruct',
-  EMBEDDING_PROVIDER: (process.env.EMBEDDING_PROVIDER as 'ollama' | 'openai') || 'ollama',
-  EMBEDDING_MODEL: process.env.EMBEDDING_MODEL || 'nomic-embed-text',
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-  OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-  GEMINI_API_KEY: process.env.GEMINI_API_KEY || ''
+const llmConfig: LLMConfig = {
+  MODEL_PROVIDER: config.MODEL_PROVIDER,
+  MODEL_NAME: config.MODEL_NAME,
+  EMBEDDING_PROVIDER: config.EMBEDDING_PROVIDER,
+  EMBEDDING_MODEL: config.EMBEDDING_MODEL,
+  OPENAI_API_KEY: config.OPENAI_API_KEY,
+  OLLAMA_BASE_URL: config.OLLAMA_BASE_URL,
+  GEMINI_API_KEY: config.GEMINI_API_KEY
 };
 
 // Initialize LLM instances
@@ -31,30 +34,30 @@ let ollamaInstance: Ollama | null = null;
 let openaiInstance: OpenAI | null = null;
 let geminiInstance: GoogleGenAI | null = null;
 
-if (config.MODEL_PROVIDER === 'ollama' || config.EMBEDDING_PROVIDER === 'ollama') {
+if (llmConfig.MODEL_PROVIDER === 'ollama' || llmConfig.EMBEDDING_PROVIDER === 'ollama') {
   ollamaInstance = new Ollama({
-    host: config.OLLAMA_BASE_URL,
+    host: llmConfig.OLLAMA_BASE_URL,
   });
 }
 
-if (config.MODEL_PROVIDER === 'openai' || config.EMBEDDING_PROVIDER === 'openai') {
-  if (!config.OPENAI_API_KEY) {
+if (llmConfig.MODEL_PROVIDER === 'openai' || llmConfig.EMBEDDING_PROVIDER === 'openai') {
+  if (!llmConfig.OPENAI_API_KEY) {
     throw new Error('OPENAI_API_KEY is required when using OpenAI provider');
   }
   openaiInstance = new OpenAI({
-    apiKey: config.OPENAI_API_KEY,
+    apiKey: llmConfig.OPENAI_API_KEY,
   });
 }
 
-if (config.MODEL_PROVIDER === 'gemini') {
-  const geminiConfig = { apiKey: config.GEMINI_API_KEY}
+if (llmConfig.MODEL_PROVIDER === 'gemini') {
+  const geminiConfig = { apiKey: llmConfig.GEMINI_API_KEY }
   console.log('Gemini api', geminiConfig)
   geminiInstance = new GoogleGenAI(geminiConfig);
 }
 // LLM Model instance
 export const llmModel = (() => {
-  console.log('Using ', config.MODEL_PROVIDER)
-  switch (config.MODEL_PROVIDER) {
+  console.log('Using ', llmConfig.MODEL_PROVIDER)
+  switch (llmConfig.MODEL_PROVIDER) {
     case 'ollama':
       if (!ollamaInstance) {
         throw new Error('Ollama instance not initialized');
@@ -62,9 +65,9 @@ export const llmModel = (() => {
       return {
         provider: 'ollama' as const,
         instance: ollamaInstance,
-        modelName: config.MODEL_NAME,
+        modelName: llmConfig.MODEL_NAME,
         async generate(prompt: string, options?: any) {
-          console.log('Prompting ollama', this.modelName, config.MODEL_NAME)
+          console.log('Prompting ollama', this.modelName, llmConfig.MODEL_NAME)
           const response: any = await ollamaInstance!.generate({
             model: this.modelName,
             prompt,
@@ -77,7 +80,7 @@ export const llmModel = (() => {
         },
         async chat(messages: any[], options?: any) {
           const response: any = await ollamaInstance!.chat({
-            model: config.MODEL_NAME,
+            model: llmConfig.MODEL_NAME,
             messages,
             stream: false,
             ...options,
@@ -93,10 +96,10 @@ export const llmModel = (() => {
       return {
         provider: 'openai' as const,
         instance: openaiInstance,
-        modelName: config.MODEL_NAME,
+        modelName: llmConfig.MODEL_NAME,
         async generate(prompt: string, options?: any) {
           const response = await openaiInstance!.completions.create({
-            model: config.MODEL_NAME,
+            model: llmConfig.MODEL_NAME,
             prompt,
             max_tokens: 1000,
             ...options,
@@ -105,7 +108,7 @@ export const llmModel = (() => {
         },
         async chat(messages: any[], options?: any) {
           const response = await openaiInstance!.chat.completions.create({
-            model: config.MODEL_NAME,
+            model: llmConfig.MODEL_NAME,
             messages,
             max_tokens: 1000,
             ...options,
@@ -120,7 +123,7 @@ export const llmModel = (() => {
       return {
         provider: 'gemini' as const,
         instance: geminiInstance,
-        modelName: config.MODEL_NAME,
+        modelName: llmConfig.MODEL_NAME,
 
         async generate(prompt: string, options?: any) {
           console.log('Prompting gemini', "gemini-2.5-flash", prompt)
@@ -165,26 +168,26 @@ export const llmModel = (() => {
         },
       };
     default:
-      throw new Error(`Unsupported model provider: ${config.MODEL_PROVIDER}`);
+      throw new Error(`Unsupported model provider: ${llmConfig.MODEL_PROVIDER}`);
   }
 })();
 
 // Embedding instance
 export const embedder = (() => {
-  switch (config.EMBEDDING_PROVIDER) {
+  switch (llmConfig.EMBEDDING_PROVIDER) {
     case 'ollama':
       if (!ollamaInstance) {
         throw new Error('Ollama instance not initialized');
       }
       return {
         provider: 'ollama' as const,
-        modelName: config.EMBEDDING_MODEL,
+        modelName: llmConfig.EMBEDDING_MODEL,
         async embed(text: string | string[]) {
           if (Array.isArray(text)) {
             const embeddings = await Promise.all(
               text.map(async (t) => {
                 const response = await ollamaInstance!.embeddings({
-                  model: config.EMBEDDING_MODEL,
+                  model: llmConfig.EMBEDDING_MODEL,
                   prompt: t,
                 });
                 return response.embedding;
@@ -193,7 +196,7 @@ export const embedder = (() => {
             return embeddings;
           } else {
             const response = await ollamaInstance!.embeddings({
-              model: config.EMBEDDING_MODEL,
+              model: llmConfig.EMBEDDING_MODEL,
               prompt: text,
             });
             return response.embedding;
@@ -207,11 +210,11 @@ export const embedder = (() => {
       }
       return {
         provider: 'openai' as const,
-        modelName: config.EMBEDDING_MODEL,
+        modelName: llmConfig.EMBEDDING_MODEL,
         async embed(text: string | string[]) {
           const input = Array.isArray(text) ? text : [text];
           const response = await openaiInstance!.embeddings.create({
-            model: config.EMBEDDING_MODEL,
+            model: llmConfig.EMBEDDING_MODEL,
             input,
           });
 
@@ -221,7 +224,7 @@ export const embedder = (() => {
       };
 
     default:
-      throw new Error(`Unsupported embedding provider: ${config.EMBEDDING_PROVIDER}`);
+      throw new Error(`Unsupported embedding provider: ${llmConfig.EMBEDDING_PROVIDER}`);
   }
 })();
 // Vector search function
@@ -325,7 +328,7 @@ export function parseLlmResponseAsJson(response: any) {
 }
 
 // Export configuration for reference
-export { config as llmConfig };
+export { llmConfig };
 
 // Type exports
 export type LLMProvider = 'ollama' | 'openai';

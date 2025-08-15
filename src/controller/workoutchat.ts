@@ -2,9 +2,12 @@
 import { Request, Response, NextFunction } from "express";
 import { RagChat } from "../services/ragChatService";
 import { classifyPrompt } from "../utils/intentClassifier";
-import { AgenticWorkoutService } from "../services/agenticWorkoutService";
+import { WorkoutServiceContainer } from "../services/agenticWorkoutOrchestrator";
+import { llmModel } from "../utils/llm";
+import { prisma } from "../lib/prisma";
 const ragChatService = new RagChat();
-const agenticChatService = new AgenticWorkoutService();
+
+const workoutServiceContainer  = new WorkoutServiceContainer(prisma, ragChatService, llmModel);
 
 export const chat = async (req: Request, res: Response, next: NextFunction) => {
   const { userId, prompt } = req.body;
@@ -24,6 +27,7 @@ export const chat = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 export const agenticChat = async (req: Request, res: Response, next: NextFunction) => {
+  const workoutService = workoutServiceContainer.getOrchestrator();
   const { userId, prompt } = req.body;
 
   let { chatId } = req.body;
@@ -36,15 +40,15 @@ export const agenticChat = async (req: Request, res: Response, next: NextFunctio
   let response;
   try {
     //check if an intent is on going
-    const existingIntent = await agenticChatService.checkForExistingIntent(userId, chatId, prompt)
+    const existingIntent = await workoutService.checkForExistingIntent(userId, chatId, prompt)
     if (existingIntent) {
-      response = await agenticChatService.agenticChat(userId, chatId, prompt, existingIntent)
+      response = await workoutService.processWorkoutRequest(userId, chatId, prompt, existingIntent)
     } else {
       //Clarify intent
       let intent = await classifyPrompt(prompt, "rules");
       console.log('Intent = ', intent)
       if (intent === 'agent') {
-        response = await agenticChatService.agenticChat(userId, chatId, prompt, existingIntent)
+        response = await workoutService.processWorkoutRequest(userId, chatId, prompt, existingIntent)
       } else {
         response = await ragChatService.hybridConversation(userId, chatId, prompt)
       }

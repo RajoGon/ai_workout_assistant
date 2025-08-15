@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { prisma } from "../..";
-import { createWorkoutEmbedding, generateWorkoutEmbedding } from "../utils/workoutEmbeddingUtils";
+import { prisma } from "../lib/prisma";
+import { WorkoutEmbeddingUtils } from "../utils/workoutEmbeddingUtils";
+
 
 export const getAllWorkouts = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -66,9 +67,9 @@ export const generateEmbeddings = async (req: Request, res: Response, next: Next
     // Loop through each to create embedding and update 
     pendingWorkoutsToEmbedd.forEach(async workout => {
       const content = `Workout on ${workout.startDate}: ${workout.type}, distance: ${workout.distance} km, duration: ${workout.idealDuration} mins`
-      const embedding = await generateWorkoutEmbedding(content) as [];
+      const embedding = await WorkoutEmbeddingUtils.generateEmbedding(content) as [];
       console.log('Embedding of dimension', embedding.length)
-      const embeddingUpdated = await createWorkoutEmbedding(workout.workoutId, workout.userId, content, embedding, {
+      const embeddingUpdated = await WorkoutEmbeddingUtils.createEmbedding(workout.workoutId, workout.userId, content, embedding, {
         type: workout.type,
       })
       if (embeddingUpdated) {

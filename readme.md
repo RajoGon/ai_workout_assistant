@@ -239,7 +239,7 @@ Main entry point for processing user messages
 #### `detectIntentAndFields(prompt)`
 Analyzes user input to determine intent and extract workout data
 
-#### `searchWorkoutEmbeddings(userId, query)`
+#### `WorkoutEmbeddingUtils.searchEmbeddings(userId, query)`
 Retrieves relevant workout history for personalized recommendations
 
 ```

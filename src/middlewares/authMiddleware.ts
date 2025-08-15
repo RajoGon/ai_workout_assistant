@@ -2,6 +2,7 @@
 // middleware/authMiddleware.js
 import { createClient } from '@supabase/supabase-js';
 import { NextFunction, Request, Response } from 'express';
+import config from '../config/config';
 // Extend Express Request
 export interface AuthenticatedRequest extends Request {
   user?: any;
@@ -16,7 +17,7 @@ const supabase = createClient(
 export default async function authMiddleware(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   try {
     //Bypass validation for this test user
-    if (req.body.userId === "user123") {
+    if (req.body.userId === config.X_API_KEY_1) {
       next();
       return;
     }
